@@ -1,16 +1,44 @@
 function timewarp(filename)
-    % reader
-    vid = VideoReader(filename);
+    fprintf('---------- Video file: %s ----------\n', filename);
 
-    % writer
+    % reading
+    fprintf('%s\n', 'Reading the video file...');
+    vid = VideoReader(filename);
+    frame_count = vid.NumberOfFrames - 1;
+    h = vid.Height;
+    w = vid.Width;
+    
+    % storing
+    in = zeros(h, w, 3, frame_count);
+    for k = 1:frame_count
+        in(:, :, :, k) = read(vid, k);
+    end
+    
+    % writing
     out_vid = VideoWriter('out.avi');
     open(out_vid);
-
-    % write one frame at a time.
-    for k = 1 : 100
-        writeVideo(out_vid, read(vid, k));
+    
+    % do some stuff to the frames here!!
+    
+    % write the video back out
+    fprintf('%s\n', 'Building the output file...');
+    for k = 1:frame_count
+        writeVideo(out_vid, in(:, :, :, k)/255.0);
     end
-
+    
     % close 'er down
     close(out_vid);
+    
+    fprintf('%s\n', 'Complete.');
 end
+
+
+%%%%%% IDEAS %%%%%%
+% rolling shutter
+% - top to bottom
+% - mirrored across center
+% - along a diagonal
+% - along a vector in the direction of motion (average movement of
+%       keypoints between frames
+% adjust brightness by speed of motion in the frame (average distance
+%   between keypoints
