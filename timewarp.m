@@ -20,7 +20,7 @@ function timewarp(filename)
     open(out_vid);
     
     % do some stuff to the frames here!!
-    ms_offset = 60; 
+    ms_offset = 10; 
     out = rolling_shutter(in, ms_offset, fr);
     
     % write the video back out

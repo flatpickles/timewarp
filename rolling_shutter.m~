@@ -3,8 +3,8 @@
 % time_offset: the time offset (in ms) between each segmentation of the output
 % frame_rate:  video frame rate (fps) 
 function out = rolling_shutter(in, time_offset, frame_rate)
-    fprintf('%s\n', 'Building a rolling shutter effect: ');
-    out = zeros(size(in));
+    fprintf('%s\n', 'Building a rolling shutter effect: 0');
+    out = in;
     next_percent_print = 0;
     percent_offset = 1;
     
@@ -22,16 +22,28 @@ function out = rolling_shutter(in, time_offset, frame_rate)
         end
         
         % init
-        new_frame = zeros(size(in, 1), size(in, 2), size(in, 3));
+%         new_frame = zeros(size(in, 1), size(in, 2), size(in, 3));
 
-        % from top to bottom, calculate new rows
-        for r=1:size(in, 1)
-            frame_offset = get_frame_offset(f, time_offset, frame_rate);
-            tw_frame = get_frame(in, f, frame_offset);
-            new_frame(r, :, :) = frame_offset * 40; % tw_frame(r, :, :);
+        % cascade through future frames
+        segs = 45;
+        seg_height = get_;
+        for s=1:(segs-1)
+            if f+s > size(in, 4)
+                % don't go OOB
+                break
+            end
+            out((s * seg_height):((s + 1) * seg_height), :, :, f+s) = ...
+                in((s * seg_height):((s + 1) * seg_height), :, :, f)
         end
-        % save it
-        out(:, :, :, f) = new_frame;
+        
+%         % from top to bottom, calculate new rows
+%         for r=1:size(in, 1)
+%             frame_offset = get_frame_offset(r, time_offset, frame_rate);
+%             tw_frame = get_frame(in, f, frame_offset);
+%             new_frame(r, :, :) = tw_frame(r, :, :);
+%         end
+%         % save it
+%         out(:, :, :, f) = new_frame;
     end
     fprintf('\n%s\n', 'Rolling shutter done.');
 end
