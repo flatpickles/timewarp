@@ -7,6 +7,7 @@ function timewarp(filename)
     frame_count = vid.NumberOfFrames - 1;
     h = vid.Height;
     w = vid.Width;
+    fr = vid.FrameRate;
     
     % storing
     in = zeros(h, w, 3, frame_count);
@@ -19,11 +20,13 @@ function timewarp(filename)
     open(out_vid);
     
     % do some stuff to the frames here!!
+    ms_offset = 60; 
+    out = rolling_shutter(in, ms_offset, fr);
     
     % write the video back out
     fprintf('%s\n', 'Building the output file...');
     for k = 1:frame_count
-        writeVideo(out_vid, in(:, :, :, k)/255.0);
+        writeVideo(out_vid, out(:, :, :, k)/255.0);
     end
     
     % close 'er down
