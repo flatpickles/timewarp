@@ -2,18 +2,27 @@
 %              original video
 % time_offset: the time offset (in ms) between each segmentation of the output
 % frame_rate:  video frame rate (fps) 
-function out = rolling_shutter(in, time_offset, frame_rate)
+function out = rolling_shutter(in, time_offset, frame_rate, crop)
+    % prettiness
     fprintf('%s\n', 'Building a rolling shutter effect: 0');
-    out(:, :, :, :) = repmat(in(:, :, :, 1), [1 1 1 size(in, 4)]);
+    next_percent_print = 0;
+    percent_offset = 5;
     
+    % determine segmentation relative to offsets
     frames = size(in, 4);
     h = size(in, 1);
+    seg_height = max([1 round((1000/frame_rate)/time_offset)]);
+    segs = ceil(h / seg_height);
     
-    next_percent_print = 0;
-    percent_offset = 1;
+    % malloc appropriately sized output
+    if crop
+        out(:, :, :, :) = repmat(in(:, :, :, 1), [1 1 1 size(in, 4)]);
+    else
+        out(:, :, :, :) = repmat(in(:, :, :, 1), [1 1 1 size(in, 4) + segs]);
+    end
     
     % find a new output frame for each frame
-    for f=1:frames
+    for f=1:frames-1
         % percent printout
         p = round(100 * f/frames);
         if next_percent_print <= p
@@ -26,17 +35,29 @@ function out = rolling_shutter(in, time_offset, frame_rate)
         end
         
         % cascade through future frames
-        seg_height = round((1000/frame_rate)/time_offset);
-        segs = ceil(h / seg_height);
         for s=1:segs
-            if f+s > h
-                % don't go OOB
+            % don't overflow
+            if f + s > frames && crop
                 break
             end
-            out(((s - 1) * seg_height + 1):min([(s * seg_height) h]), :, :, f+s) = ...
-                in(((s - 1) * seg_height + 1):min([(s * seg_height) h]), :, :, f);
+            % don't leave any space on the bottom
+            this_seg_height = seg_height;
+            if s == segs
+                this_seg_height = this_seg_height + mod(h, seg_height);
+            end
+            % fill in with linear time-domain smoothing
+            for r=1:this_seg_height
+                p = r/this_seg_height; % linear blend, bottom to top
+                x = (s - 1) * seg_height + r; % row location
+                out(x,:,:, f+s) = (1 - p) * in(x, :, :, f + 1) + p * in(x, :, :, f);
+            end
         end
-        
     end
+    
+    % crop front of video if need be
+    if crop
+        out = out(:, :, :, segs:size(out, 4));
+    end
+    
     fprintf('\n%s\n', 'Rolling shutter done.');
 end

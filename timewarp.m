@@ -17,15 +17,16 @@ function timewarp(filename)
     
     % writing
     out_vid = VideoWriter('out.avi');
+    out_vid.FrameRate = fr * 2; % speed it up for testing
     open(out_vid);
     
     % do some stuff to the frames here!!
-    ms_offset = 10; 
-    out = rolling_shutter(in, ms_offset, fr);
+    ms_offset = 15; 
+    out = rolling_shutter(in, ms_offset, fr, false);
     
     % write the video back out
     fprintf('%s\n', 'Building the output file...');
-    for k = 1:frame_count
+    for k = 1:size(out, 4)
         writeVideo(out_vid, out(:, :, :, k)/255.0);
     end
     
