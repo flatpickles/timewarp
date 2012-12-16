@@ -21,11 +21,12 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
         out(:, :, :, :) = repmat(in(:, :, :, 1), [1 1 1 size(in, 4) + segs]);
     end
     
-    % find a new output frame for each frame
-    for f=1:frames-1
+    % find a new output frame for each frame 
+    % (exclude first & last two -> no smoothing edge cases)
+    for f=2:frames-2
         % percent printout
-        p = round(100 * f/frames);
-        if next_percent_print <= p
+        dt = round(100 * f/frames);
+        if next_percent_print <= dt
             fprintf('\b');
             if next_percent_print > 9
                 fprintf('\b')
@@ -45,11 +46,32 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
             if s == segs
                 this_seg_height = this_seg_height + mod(h, seg_height);
             end
-            % fill in with linear time-domain smoothing
+            % fill in with gaussian time-domain smoothing
             for r=1:this_seg_height
-                p = r/this_seg_height; % linear blend, bottom to top
-                x = (s - 1) * seg_height + r; % row location
-                out(x,:,:, f+s) = (1 - p) * in(x, :, :, f + 1) + p * in(x, :, :, f);
+                % calculate mid-frame dt & absolute row location
+                dt = r/this_seg_height;
+                x = (s - 1) * seg_height + r;
+                % samples for gaussian blending of four neighboring frames
+                p1 = in(x, :, :, f);
+                p2 = in(x, :, :, f - 1);
+                f1 = in(x, :, :, f + 1);
+                f2 = in(x, :, :, f + 2);
+                % gaussian weightings
+                sig = .75;
+                cntr = f + (1 - dt); % segment *above* is older
+                wp1 = gauss(f, sig, cntr);
+                wp2 = gauss(f - 1, sig, cntr);
+                wf1 = gauss(f + 1, sig, cntr);
+                wf2 = gauss(f + 2, sig, cntr);
+                % normalize
+                weight_sum = wp1 + wp2 + wf1 + wf2;
+                wp1 = wp1 / weight_sum;
+                wp2 = wp2 / weight_sum;
+                wf1 = wf1 / weight_sum;
+                wf2 = wf2 / weight_sum;
+                % calculate weighted avg
+                out(x, :, :, f + s) = (wp2 * p2) + (wp1 * p1) + ...
+                    (wf1 * f1) + (wf2 * f2);
             end
         end
     end
@@ -59,5 +81,10 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
         out = out(:, :, :, segs:size(out, 4));
     end
     
-    fprintf('\n%s\n', 'Rolling shutter done.');
+    fprintf('\b\b100\n%s\n', 'Rolling shutter done.');
+end
+
+% get a gaussian value for weighting...
+function o = gauss(x, sig, c)
+    o = exp((-(x-c)^2)/(2 * sig^2));
 end

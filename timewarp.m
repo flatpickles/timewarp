@@ -27,7 +27,7 @@ function timewarp(filename)
     % write the video back out
     fprintf('%s\n', 'Building the output file...');
     for k = 1:size(out, 4)
-        writeVideo(out_vid, out(:, :, :, k)/255.0);
+        writeVideo(out_vid, round(out(:, :, :, k))/255.0);
     end
     
     % close 'er down
