@@ -22,7 +22,7 @@ function timewarp(filename)
     
     % do some stuff to the frames here!!
     ms_offset = 15; 
-    out = rolling_shutter(in, ms_offset, fr, false);
+    out = rolling_shutter(in, ms_offset, fr, false, [1 0]);
     
     % write the video back out
     fprintf('%s\n', 'Building the output file...');
@@ -35,14 +35,3 @@ function timewarp(filename)
     
     fprintf('%s\n', 'Complete.');
 end
-
-
-%%%%%% IDEAS %%%%%%
-% rolling shutter
-% - top to bottom
-% - mirrored across center
-% - along a diagonal
-% - along a vector in the direction of motion (average movement of
-%       keypoints between frames
-% adjust brightness by speed of motion in the frame (average distance
-%   between keypoints

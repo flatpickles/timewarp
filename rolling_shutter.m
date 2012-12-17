@@ -2,7 +2,11 @@
 %              original video
 % time_offset: the time offset (in ms) between each segmentation of the output
 % frame_rate:  video frame rate (fps) 
-function out = rolling_shutter(in, time_offset, frame_rate, crop)
+% crop:        whether to crop the beginning and end of the film, or use
+%              the first frame as "background"
+% sd:          shutter direction: ±[0 1] or ±[1 0]
+%              [vertical horizontal] direction
+function out = rolling_shutter(in, time_offset, frame_rate, crop, sd)
     % prettiness
     fprintf('%s\n', 'Building a rolling shutter effect: 0');
     next_percent_print = 0;
@@ -10,9 +14,9 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
     
     % determine segmentation relative to offsets
     frames = size(in, 4);
-    h = size(in, 1);
-    seg_height = max([1 round((1000/frame_rate)/time_offset)]);
-    segs = ceil(h / seg_height);
+    depth = abs(sd(1) * size(in, 1) + sd(2) * size(in, 2));
+    seg_size = max([1 round((1000/frame_rate)/time_offset)]);
+    segs = ceil(depth / seg_size);
     
     % malloc appropriately sized output
     if crop
@@ -41,24 +45,36 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
             if f + s > frames && crop
                 break
             end
-            % don't leave any space on the bottom
-            this_seg_height = seg_height;
+            % don't leave any space on the end
+            this_seg_size = seg_size;
             if s == segs
-                this_seg_height = this_seg_height + mod(h, seg_height);
+                this_seg_size = this_seg_size + mod(depth, seg_size);
             end
             % fill in with gaussian time-domain smoothing
-            for r=1:this_seg_height
-                % calculate mid-frame dt & absolute row location
-                dt = r/this_seg_height;
-                x = (s - 1) * seg_height + r;
+            for r=1:this_seg_size
+                % calculate mid-frame dt & absolute row/col location
+                dt = r/this_seg_size;
+                x = (s - 1) * seg_size + r;
                 % samples for gaussian blending of four neighboring frames
-                p1 = in(x, :, :, f);
-                p2 = in(x, :, :, f - 1);
-                f1 = in(x, :, :, f + 1);
-                f2 = in(x, :, :, f + 2);
+                [p1 p2 f1 f2 d] = deal(0, 0, 0, 0, 0); % scoping
+                if sd(2) == 0
+                    d = mod(depth + sd(1) * x, depth);
+                    if (d == 0) d = depth; end
+                    p1 = in(d, :, :, f);
+                    p2 = in(d, :, :, f - 1);
+                    f1 = in(d, :, :, f + 1);
+                    f2 = in(d, :, :, f + 2);
+                else
+                    d = mod(depth + sd(2) * x, depth);
+                    if (d == 0) d = depth; end
+                    p1 = in(:, d, :, f);
+                    p2 = in(:, d, :, f - 1);
+                    f1 = in(:, d, :, f + 1);
+                    f2 = in(:, d, :, f + 2);
+                end
                 % gaussian weightings
                 sig = .75;
-                cntr = f + (1 - dt); % segment *above* is older
+                cntr = f + (1 - dt);
                 wp1 = gauss(f, sig, cntr);
                 wp2 = gauss(f - 1, sig, cntr);
                 wf1 = gauss(f + 1, sig, cntr);
@@ -70,8 +86,13 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop)
                 wf1 = wf1 / weight_sum;
                 wf2 = wf2 / weight_sum;
                 % calculate weighted avg
-                out(x, :, :, f + s) = (wp2 * p2) + (wp1 * p1) + ...
-                    (wf1 * f1) + (wf2 * f2);
+                if sd(2) == 0
+                    out(d, :, :, f + s) = (wp2 * p2) + (wp1 * p1) + ...
+                        (wf1 * f1) + (wf2 * f2);
+                else
+                    out(:, d, :, f + s) = (wp2 * p2) + (wp1 * p1) + ...
+                        (wf1 * f1) + (wf2 * f2);
+                end
             end
         end
     end
