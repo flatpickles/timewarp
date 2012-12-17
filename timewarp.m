@@ -20,6 +20,10 @@ function timewarp(filename)
     out_vid.FrameRate = fr * 2; % speed it up for testing
     open(out_vid);
     
+    % find motion metric to determine ms_offset
+    mm = motion_metric(in, fr)
+    % TODO: use to find ms_offset; more motion -> less offset
+    
     % do some stuff to the frames here!!
     ms_offset = 15; 
     out = rolling_shutter(in, ms_offset, fr, false, [1 0]);
