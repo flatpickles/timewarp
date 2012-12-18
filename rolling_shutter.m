@@ -102,7 +102,7 @@ function out = rolling_shutter(in, time_offset, frame_rate, crop, sd)
         out = out(:, :, :, segs:size(out, 4));
     end
     
-    fprintf('\b\b100\n%s\n', 'Rolling shutter done.');
+    fprintf('\n%s\n', 'Rolling shutter done.');
 end
 
 % get a gaussian value for weighting...

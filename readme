@@ -1,1 +1,13 @@
-In progress...
+timewarp | man1
+Dec. 2012
+
+This project accomplishes a rolling shutter video effect, using MATLAB. The inspiration behind my idea: https://vimeo.com/7878518. (This video effect is accomplished using an actual rolling shutter in hardware.)
+
+For a brief discussion of this project and a subset of my results, check out: https://vimeo.com/55887586
+
+If you're interested in using this code to generate your own rolling shutter videos, try to use input with a high framerate to avoid blurred output, and experiment with per-line offsets between 5ms and 20ms. Generally, the faster the motion in the film, the less offset you should use.
+
+motion_metric.m is the beginning of a descriptor for motion in a movie (to aid in automatically finding a reasonable millisecond offset). It doesn't yet generalize well to many different types of input, though it does function as expected for videos of the same scene with objects moving at different rates. Nonetheless, it hasn't yet been incorporated into the core functionality of this project.
+
+To run from the MATLAB console: timewarp filename [ms_offset]
+Please read function header comments (rolling_shutter.m) for further usage notes.

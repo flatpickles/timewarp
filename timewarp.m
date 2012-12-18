@@ -38,7 +38,7 @@ function timewarp(filename, varargin)
     end
     
     % do some stuff
-    out = rolling_shutter(in, ms_offset, fr, false, [-1 0]);
+    out = rolling_shutter(in, ms_offset, fr, false, [0 1]);
     
     % write the video back out
     fprintf('%s\n', 'Building the output file...');
