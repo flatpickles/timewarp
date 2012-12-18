@@ -8,7 +8,7 @@
 %              [vertical horizontal] direction
 function out = rolling_shutter(in, time_offset, frame_rate, crop, sd)
     % prettiness
-    fprintf('%s\n', 'Building a rolling shutter effect: 0');
+    fprintf('%s%i%s\n', 'Building a rolling shutter effect w/ offset of ', time_offset, ' ms: 0');
     next_percent_print = 0;
     percent_offset = 5;
     

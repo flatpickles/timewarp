@@ -1,5 +1,9 @@
-function timewarp(filename)
+function timewarp(filename, varargin)
     fprintf('---------- Video file: %s ----------\n', filename);
+    ms_offset = -1;
+    if size(varargin) ~= 0
+        ms_offset = str2num(varargin{1});
+    end
 
     % reading
     fprintf('%s\n', 'Reading the video file...');
@@ -17,16 +21,24 @@ function timewarp(filename)
     
     % writing
     out_vid = VideoWriter('out.avi');
-    out_vid.FrameRate = fr * 2; % speed it up for testing
+    out_vid.FrameRate = fr * 1; % speed it up for testing
     open(out_vid);
     
-    % find motion metric to determine ms_offset
-    mm = motion_metric(in, fr)
-    % TODO: use to find ms_offset; more motion -> less offset
+%     % find motion metric to determine ms_offset (experimental)
+%     mm = motion_metric(in, fr)
+%     ms_offset = max([round(1 / (3.5 * mm)) - 5 1])
+%     fprintf('%d%s', ms_offset, ' ms might be a good offset. Press enter, or ');
+%     t = input('input a different offset: ');
+%     if (t) ms_offset = t; end
     
-    % do some stuff to the frames here!!
-    ms_offset = 15; 
-    out = rolling_shutter(in, ms_offset, fr, false, [1 0]);
+    if ms_offset == -1
+        ms_offset = input(strcat(strcat('Input millisecond offset for each pixel row/col.\n', ...
+            'Good values range [0 2] * framerate - less offset for videos w/ more motion\n', ...
+            'Offset:  ')));
+    end
+    
+    % do some stuff
+    out = rolling_shutter(in, ms_offset, fr, false, [-1 0]);
     
     % write the video back out
     fprintf('%s\n', 'Building the output file...');

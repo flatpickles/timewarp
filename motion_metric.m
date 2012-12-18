@@ -1,4 +1,4 @@
-% Function to get a metric associated with overall motion in film
+% Experimental function to get a metric associated with overall motion in film
 % mov:       4D video matrix
 % framerate: fps of mov
 function metric = motion_metric(mov, framerate)
@@ -17,7 +17,6 @@ function metric = motion_metric(mov, framerate)
         last_frame = frame;
     end
     
-    % framerate has exponential relationship (via ssd)
-    % number of frames has linear relationship
-    metric = (metric / framerate ^ 2) / size(mov, 4);
+    % factor out linear relationships
+    metric = (metric / framerate) / (size(mov, 4) * size(mov, 1) * size(mov, 2));
 end
